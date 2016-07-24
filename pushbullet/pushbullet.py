@@ -222,7 +222,7 @@ class Pushbullet(object):
     def get_ratelimit(self):
         return self._ratelimit
 
-    def _set_ratelimit(self, headers):
+    def _set_ratelimit(self, resp):
         self._ratelimit["remaining"] = resp.headers["X-Ratelimit-Remaining"]
         self._ratelimit["limit"] = resp.headers["X-Ratelimit-Limit"]
         self._ratelimit["reset"] = resp.headers["X-Ratelimit-Reset"]
