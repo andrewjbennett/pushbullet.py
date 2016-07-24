@@ -34,6 +34,8 @@ class Pushbullet(object):
         self._session.auth = (self.api_key, "")
         self._session.headers.update(self._json_header)
 
+        self._ratelimit = {}
+
         self.refresh()
 
         self._encryption_key = None
@@ -59,6 +61,8 @@ class Pushbullet(object):
 
         if resp.status_code != requests.codes.ok:
             raise InvalidKeyError()
+
+        self._set_ratelimit(resp)
 
         return resp.json()
 
@@ -215,6 +219,14 @@ class Pushbullet(object):
 
         return pushes_list
 
+    def get_ratelimit(self):
+        return self._ratelimit
+
+    def _set_ratelimit(self, headers):
+        self._ratelimit["remaining"] = resp.headers["X-Ratelimit-Remaining"]
+        self._ratelimit["limit"] = resp.headers["X-Ratelimit-Limit"]
+        self._ratelimit["reset"] = resp.headers["X-Ratelimit-Reset"]
+
     def dismiss_push(self, iden):
         data = {"dismissed": True}
         r = self._session.post("{}/{}".format(self.PUSH_URL, iden), data=json.dumps(data))
@@ -296,6 +308,8 @@ class Pushbullet(object):
 
     def _push(self, data):
         r = self._session.post(self.PUSH_URL, data=json.dumps(data))
+
+        self._set_ratelimit(r)
 
         if r.status_code == requests.codes.ok:
             return r.json()
